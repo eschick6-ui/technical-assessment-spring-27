@@ -312,3 +312,53 @@
         height: 350px;
     }
 }
+/* Vehicle popup styling */
+.leaflet-popup-content-wrapper {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.leaflet-popup-tip {
+    background-color: var(--surface);
+}
+
+.leaflet-popup-content {
+    margin: 18px;
+}
+
+.vehicle-popup {
+    min-width: 180px;
+    font-family: "Inter", sans-serif;
+}
+
+.vehicle-popup h3 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.popup-details p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.popup-details strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Popup close button */
+.leaflet-container a.leaflet-popup-close-button {
+    color: var(--text-secondary);
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+    color: var(--text-primary);
+}

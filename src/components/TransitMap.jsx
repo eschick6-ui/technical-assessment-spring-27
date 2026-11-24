@@ -1,10 +1,39 @@
-import {MapContainer, TileLayer, CircleMarker} from "react-leaflet";
+import {
+    MapContainer,
+    TileLayer,
+    CircleMarker,
+    Popup
+} from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 
 // Geographic coordinates of downtown Boston
 const BOSTON_CENTER = [42.3601, -71.0589];
 
-export default function TransitMap({ vehicles = [] }) {
+// Convert API status values into readable text
+const STATUS_LABELS = {
+    IN_TRANSIT_TO: "In Transit",
+    STOPPED_AT: "Stopped",
+    INCOMING_AT: "Approaching"
+};
+
+export default function TransitMap({
+    vehicles = [],
+    included = []
+}) {
+
+    // Create lookup objects for routes and stops
+    const routes = {};
+    const stops = {};
+
+    // Separate included resources by type
+    included.forEach((item) => {
+        if (item.type === "route") {
+            routes[item.id] = item.attributes;
+        } else if (item.type === "stop") {
+            stops[item.id] = item.attributes;
+        }
+    });
 
     return (
         <MapContainer
@@ -21,8 +50,15 @@ export default function TransitMap({ vehicles = [] }) {
             {/* Render a marker for each vehicle */}
             {vehicles.map((vehicle) => {
 
-                // Extract the vehicle's geographic coordinates
-                const { latitude, longitude } = vehicle.attributes;
+                // Extract vehicle attributes
+                const {
+                    latitude,
+                    longitude,
+                    label,
+                    direction_id,
+                    current_status,
+                    updated_at
+                } = vehicle.attributes;
 
                 // Skip vehicles without valid coordinates
                 if (
@@ -32,7 +68,47 @@ export default function TransitMap({ vehicles = [] }) {
                     return null;
                 }
 
-                // Display the vehicle on the map
+                // Retrieve the associated route and stop IDs
+                const routeId =
+                    vehicle.relationships?.route?.data?.id;
+
+                const stopId =
+                    vehicle.relationships?.stop?.data?.id;
+
+                // Look up additional route and stop information
+                const route = routes[routeId];
+                const stop = stops[stopId];
+
+                // Determine the route's display name
+                const routeName =
+                    route?.long_name ||
+                    route?.short_name ||
+                    routeId ||
+                    "Unknown Route";
+
+                // Determine the vehicle's direction
+                const direction =
+                    route?.direction_names?.[direction_id] ||
+                    "Unknown";
+
+                // Convert the vehicle's status into readable text
+                const status =
+                    STATUS_LABELS[current_status] ||
+                    "Unknown";
+
+                // Retrieve the stop name
+                const stopName =
+                    stop?.name || "Unavailable";
+
+                // Format the last updated time
+                const updatedTime = updated_at
+                    ? new Date(updated_at).toLocaleTimeString(
+                        "en-US",
+                        { timeZone: "America/New_York" }
+                    )
+                    : "Unavailable";
+
+                // Display the vehicle marker and popup
                 return (
                     <CircleMarker
                         key={vehicle.id}
@@ -44,7 +120,48 @@ export default function TransitMap({ vehicles = [] }) {
                             fillOpacity: 0.9,
                             weight: 2
                         }}
-                    />
+                    >
+                        <Popup>
+                            <div className="vehicle-popup">
+
+                                <h3>{routeName}</h3>
+
+                                <div className="popup-details">
+
+                                    <p>
+                                        <strong>Vehicle:</strong>{" "}
+                                        {label || vehicle.id}
+                                    </p>
+
+                                    <p>
+                                        <strong>Direction:</strong>{" "}
+                                        {direction}
+                                    </p>
+
+                                    <p>
+                                        <strong>Status:</strong>{" "}
+                                        {status}
+                                    </p>
+
+                                    <p>
+                                        <strong>
+                                            {current_status === "STOPPED_AT"
+                                                ? "Current Stop:"
+                                                : "Next Stop:"}
+                                        </strong>{" "}
+                                        {stopName}
+                                    </p>
+
+                                    <p>
+                                        <strong>Last Updated:</strong>{" "}
+                                        {updatedTime}
+                                    </p>
+
+                                </div>
+
+                            </div>
+                        </Popup>
+                    </CircleMarker>
                 );
             })}
 

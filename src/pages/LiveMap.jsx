@@ -7,6 +7,9 @@ export default function LiveMap() {
     // Store the vehicles returned by the API
     const [vehicles, setVehicles] = useState([]);
 
+    // Store additional route and stop information
+    const [included, setIncluded] = useState([]);
+
     // Track whether data is still being fetched
     const [loading, setLoading] = useState(true);
 
@@ -20,10 +23,13 @@ export default function LiveMap() {
 
         async function loadVehicles() {
             try {
-                const response = await fetchVehicles();
+                const response = await fetchVehicles({
+                    include: "route,stop"
+                });
 
                 if (!cancelled) {
                     setVehicles(response.data);
+                    setIncluded(response.included || []);
                 }
             } catch (err) {
                 if (!cancelled) {
@@ -97,7 +103,10 @@ export default function LiveMap() {
             )}
 
             <div className="map-wrapper">
-                <TransitMap vehicles={vehicles} />
+                <TransitMap 
+                    vehicles={vehicles}
+                    included={included}
+                />
             </div>
 
         </section>
