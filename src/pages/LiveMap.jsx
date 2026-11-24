@@ -97,7 +97,7 @@ export default function LiveMap() {
             )}
 
             <div className="map-wrapper">
-                <TransitMap />
+                <TransitMap vehicles={vehicles} />
             </div>
 
         </section>
