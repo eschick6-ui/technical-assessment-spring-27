@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchVehicles } from "../services/mbtaApi.js";
+import TransitMap from "../components/TransitMap.jsx";
 
 export default function LiveMap() {
 
@@ -95,9 +96,8 @@ export default function LiveMap() {
                 </p>
             )}
 
-            <div className="placeholder map-placeholder">
-                <h2>Live Transit Map</h2>
-                <p>Interactive vehicle tracking coming soon.</p>
+            <div className="map-wrapper">
+                <TransitMap />
             </div>
 
         </section>
