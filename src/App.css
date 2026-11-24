@@ -267,3 +267,21 @@
         grid-template-columns: 1fr;
     }
 }
+/* Navigation focus indicator */
+.nav-links a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+@media (max-width: 480px) {
+    .nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        overflow-x: visible;
+    }
+
+    .nav-links a {
+        text-align: center;
+        white-space: normal;
+    }
+}
