@@ -230,11 +230,6 @@
     .map-placeholder {
         min-height: 350px;
     }
-    
-    /* Hide the legend while a vehicle popup is open */
-    .transit-map-container:has(.leaflet-popup) .map-legend {
-        display: none;
-    }
 }
 
 /* Dashboard statistics */
@@ -410,20 +405,6 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* Collapsible legend heading */
-.map-legend summary {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Add spacing when the legend is expanded */
-.map-legend[open] summary {
-    margin-bottom: 10px;
-}
-
 /* Individual legend entries */
 .legend-item {
     display: flex;
@@ -452,14 +433,6 @@
         bottom: 20px;
         left: 8px;
         padding: 8px 10px;
-    }
-
-    .map-legend summary {
-        font-size: 12px;
-    }
-
-    .map-legend[open] summary {
-        margin-bottom: 6px;
     }
 
     .legend-item {
@@ -508,5 +481,83 @@
     .popup-route-dot {
         width: 9px;
         height: 9px;
+    }
+}
+
+/* Legend toggle button */
+.legend-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    background: transparent;
+    border: none;
+    padding: 0;
+
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Preserve heading appearance while a popup is open */
+.legend-toggle:disabled {
+    opacity: 1;
+    cursor: default;
+}
+
+/* Animated legend arrow */
+.legend-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease;
+}
+
+.legend-arrow.expanded {
+    transform: rotate(90deg);
+}
+
+/* Collapsed legend content */
+.legend-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+
+    transition:
+        grid-template-rows 0.3s ease,
+        opacity 0.25s ease;
+}
+
+/* Expanded legend content */
+.legend-content.expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+/* Prevent content from overflowing during animation */
+.legend-content-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.legend-content-inner .legend-item:first-child {
+    margin-top: 10px;
+}
+
+/* Responsive legend heading */
+@media (max-width: 600px) {
+    .legend-toggle {
+        font-size: 12px;
+        gap: 6px;
+    }
+}
+
+/* Respect reduced-motion accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+    .legend-content,
+    .legend-arrow {
+        transition: none;
     }
 }

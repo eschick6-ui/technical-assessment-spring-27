@@ -1,9 +1,12 @@
+import { useState } from "react";
+
 import {
     MapContainer,
     TileLayer,
     CircleMarker,
     Popup,
-    useMap
+    useMap,
+    useMapEvents
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -77,6 +80,78 @@ function CenteredPopup({ children }) {
         >
             {children}
         </Popup>
+    );
+}
+
+function MapLegend() {
+    // Track whether the user has expanded the legend
+    const [expanded, setExpanded] = useState(true);
+
+    // Track whether a vehicle popup is open
+    const [popupOpen, setPopupOpen] = useState(false);
+
+    // Listen for popup events on the map
+    useMapEvents({
+        popupopen: () => {
+            setPopupOpen(true);
+        },
+        popupclose: () => {
+            setPopupOpen(false);
+        }
+    });
+
+    // Automatically collapse the legend when a popup is open
+    const isExpanded = expanded && !popupOpen;
+
+    return (
+        <div className="map-legend">
+
+            <button
+                type="button"
+                className="legend-toggle"
+                aria-expanded={isExpanded}
+                disabled={popupOpen}
+                onClick={() => setExpanded(!expanded)}
+            >
+                <span
+                    className={`legend-arrow ${
+                        isExpanded ? "expanded" : ""
+                    }`}
+                >
+                    ▸
+                </span>
+
+                Transit Lines
+            </button>
+
+            <div
+                className={`legend-content ${
+                    isExpanded ? "expanded" : ""
+                }`}
+                aria-hidden={!isExpanded}
+            >
+                <div className="legend-content-inner">
+
+                    {LINE_COLORS.map((line) => (
+                        <div
+                            key={line.name}
+                            className="legend-item"
+                        >
+                            <span
+                                className="legend-dot"
+                                style={{
+                                    backgroundColor: line.color
+                                }}
+                            />
+
+                            <span>{line.name}</span>
+                        </div>
+                    ))}
+
+                </div>
+            </div>
+
+        </div>
     );
 }
 
@@ -247,25 +322,8 @@ export default function TransitMap({
                 })}
                         
                 {/* Map legend */}
-                <details className="map-legend" open>
-                    <summary>Transit Lines</summary>
-
-                    {LINE_COLORS.map((line) => (
-                        <div
-                            key={line.name}
-                            className="legend-item"
-                        >
-                            <span
-                                className="legend-dot"
-                                style={{
-                                    backgroundColor: line.color
-                                }}
-                            />
-
-                            <span>{line.name}</span>
-                        </div>
-                    ))}
-                </details>
+                <MapLegend />
+                
             </MapContainer>
         </div>
     );
