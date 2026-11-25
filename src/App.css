@@ -780,3 +780,220 @@
         transition: none;
     }
 }
+
+/* ==============================
+   Transit Line Filters
+   ============================== */
+
+.filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+/* Filter header */
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.filter-header h3 {
+    margin: 0 0 6px;
+    color: var(--text-primary);
+    font-size: 18px;
+}
+
+.filter-header p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.filter-selection-count {
+    color: var(--text-secondary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Transit category buttons */
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.filter-chip:hover {
+    border-color: var(--line-color);
+}
+
+.filter-chip.selected {
+    border-color: var(--line-color);
+    background: color-mix(
+        in srgb,
+        var(--line-color) 12%,
+        var(--surface)
+    );
+    color: var(--text-primary);
+}
+
+.filter-chip:focus-visible {
+    outline: 2px solid var(--line-color);
+    outline-offset: 3px;
+}
+
+/* Colored transit indicators */
+
+.filter-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--line-color);
+}
+
+.filter-chip:not(.selected) .filter-dot {
+    opacity: 0.5;
+}
+
+.filter-indicator {
+    width: 12px;
+    text-align: center;
+    font-size: 13px;
+}
+
+/* Filter footer */
+
+.filter-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-action-button {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.filter-action-button:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.filter-action-button:focus-visible {
+    outline: 2px solid var(--text-secondary);
+    outline-offset: 3px;
+}
+
+.filter-vehicle-count {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.filter-message {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Mobile transit filters */
+
+@media (max-width: 600px) {
+
+    .filter-panel {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .filter-header h3 {
+        font-size: 16px;
+    }
+
+    .filter-header p {
+        font-size: 12px;
+    }
+
+    .filter-selection-count {
+        font-size: 12px;
+    }
+
+    .filter-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .filter-chip {
+        justify-content: flex-start;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .filter-indicator {
+        margin-left: auto;
+    }
+
+    .filter-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-vehicle-count {
+        font-size: 12px;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .filter-chip,
+    .filter-action-button {
+        transition: none;
+    }
+
+}

@@ -7,10 +7,78 @@ import {
 import {
     fetchVehicles,
     fetchRoutes
-} from "../services/mbtaApi";import TransitMap from "../components/TransitMap.jsx";
+} from "../services/mbtaApi";
+import TransitMap from "../components/TransitMap.jsx";
+import TransitFilters from "../components/TransitFilters";
 
 // Refresh vehicle data every 15 seconds
 const REFRESH_INTERVAL = 15000;
+
+const TRANSIT_CATEGORIES = [
+    { id: "red", name: "Red Line", color: "#DA291C" },
+    { id: "orange", name: "Orange Line", color: "#ED8B00" },
+    { id: "blue", name: "Blue Line", color: "#003DA5" },
+    { id: "green", name: "Green Line", color: "#00843D" },
+    { id: "commuter", name: "Commuter Rail", color: "#80276C" },
+    { id: "silver", name: "Silver Line", color: "#7C878E" },
+    { id: "bus", name: "Bus", color: "#FFC72C" },
+    { id: "ferry", name: "Ferry", color: "#008EAA" }
+];
+
+// Determine which transit category a route belongs to
+function getTransitCategory(route, routeId = route?.id) {
+
+    // Categorize generic shuttle vehicles as buses
+    // even when their route information is unavailable
+    if (routeId === "Shuttle-Generic") {
+        return "bus";
+    }
+
+    if (!route) {
+        return null;
+    }
+
+    const { type, short_name } = route.attributes;
+
+    // Subway lines
+    if (route.id === "Red" || route.id === "Mattapan") {
+        return "red";
+    }
+
+    if (route.id === "Orange") {
+        return "orange";
+    }
+
+    if (route.id === "Blue") {
+        return "blue";
+    }
+
+    // Green Line branches
+    if (route.id.startsWith("Green-")) {
+        return "green";
+    }
+
+    // Commuter Rail
+    if (type === 2) {
+        return "commuter";
+    }
+
+    // Silver Line and regular buses
+    if (type === 3) {
+        if (short_name?.startsWith("SL")) {
+            return "silver";
+        }
+
+        return "bus";
+    }
+
+    // Ferry
+    if (type === 4) {
+        return "ferry";
+    }
+
+    return null;
+}
 
 export default function LiveMap() {
 
@@ -34,6 +102,11 @@ export default function LiveMap() {
 
     // Track errors when retrieving route data
     const [routesError, setRoutesError] = useState(null);
+
+    // Store the transit categories currently selected by the user
+    const [selectedCategories, setSelectedCategories] = useState(
+        TRANSIT_CATEGORIES.map((category) => category.id)
+    );
 
     // Determine whether automatic refreshes are enabled
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -173,6 +246,92 @@ export default function LiveMap() {
         };
 
     }, []);
+
+    // Select or deselect an individual transit category
+    function toggleCategory(categoryId) {
+
+        setSelectedCategories((previousCategories) => {
+
+            if (previousCategories.includes(categoryId)) {
+
+                return previousCategories.filter(
+                    (id) => id !== categoryId
+                );
+
+            }
+
+            return [...previousCategories, categoryId];
+
+        });
+    }
+
+    // Select every transit category
+    function selectAllCategories() {
+
+        setSelectedCategories(
+            TRANSIT_CATEGORIES.map((category) => category.id)
+        );
+
+    }
+
+    // Deselect every transit category
+    function clearAllCategories() {
+
+        setSelectedCategories([]);
+
+    }
+
+    // Create a lookup object for accessing routes by ID
+    const routeLookup = {};
+
+    routes.forEach((route) => {
+        routeLookup[route.id] = route;
+    });
+
+    // Only display vehicles belonging to selected transit categories
+    const filteredVehicles = vehicles.filter((vehicle) => {
+
+        // Retrieve the route ID associated with this vehicle
+        const routeId = vehicle.relationships?.route?.data?.id;
+
+        // Find the corresponding route
+        const route = routeLookup[routeId];
+
+        // Determine the vehicle's transit category
+        const category = getTransitCategory(route, routeId);
+
+        // Preserve uncategorized vehicles when all filters are selected
+        if (!category) {
+            return selectedCategories.length === TRANSIT_CATEGORIES.length;
+        }
+
+        // Check whether the category is currently selected
+        return selectedCategories.includes(category);
+
+    });
+    console.table(
+        vehicles
+            .filter((vehicle) => {
+                const routeId = vehicle.relationships?.route?.data?.id;
+                const route = routeLookup[routeId];
+
+                return !getTransitCategory(route);
+            })
+            .map((vehicle) => {
+                const routeId = vehicle.relationships?.route?.data?.id;
+                const route = routeLookup[routeId];
+
+                return {
+                    vehicleId: vehicle.id,
+                    routeId: routeId,
+                    routeFound: Boolean(route),
+                    longName: route?.attributes?.long_name,
+                    shortName: route?.attributes?.short_name,
+                    type: route?.attributes?.type
+                };
+            })
+    );
+
     return (
         <section className="page">
 
@@ -218,21 +377,6 @@ export default function LiveMap() {
                     </h2>
                 </div>
 
-            </div>
-            {/* Temporary route data test */}
-            <div>
-                <p>
-                    Total Routes:{" "}
-                    {routesLoading
-                        ? "Loading..."
-                        : routesError
-                            ? "Error"
-                            : routes.length}
-                </p>
-
-                {routesError && (
-                    <p>{routesError}</p>
-                )}
             </div>
             {/* Vehicle refresh controls */}
             <div className="refresh-panel">
@@ -308,6 +452,18 @@ export default function LiveMap() {
                 </div>
 
             </div>
+            {/* Transit line filters */}
+            <TransitFilters
+                categories={TRANSIT_CATEGORIES}
+                selectedCategories={selectedCategories}
+                onToggle={toggleCategory}
+                onSelectAll={selectAllCategories}
+                onClearAll={clearAllCategories}
+                totalVehicles={vehicles.length}
+                visibleVehicles={filteredVehicles.length}
+                loading={routesLoading}
+                error={routesError}
+            />
 
             {loading && (
                 <p>Loading vehicles...</p>
@@ -324,7 +480,7 @@ export default function LiveMap() {
             {!loading && (
                 <div className="map-wrapper">
                     <TransitMap
-                        vehicles={vehicles}
+                        vehicles={filteredVehicles}
                         included={included}
                     />
                 </div>
