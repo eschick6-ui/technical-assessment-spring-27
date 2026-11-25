@@ -4,8 +4,10 @@ import {
     useCallback,
     useRef
 } from "react";
-import { fetchVehicles } from "../services/mbtaApi.js";
-import TransitMap from "../components/TransitMap.jsx";
+import {
+    fetchVehicles,
+    fetchRoutes
+} from "../services/mbtaApi";import TransitMap from "../components/TransitMap.jsx";
 
 // Refresh vehicle data every 15 seconds
 const REFRESH_INTERVAL = 15000;
@@ -23,6 +25,15 @@ export default function LiveMap() {
 
     // Store an error message if the request fails
     const [error, setError] = useState(null);
+
+    // Store all available MBTA routes
+    const [routes, setRoutes] = useState([]);
+
+    // Track whether route data is loading
+    const [routesLoading, setRoutesLoading] = useState(true);
+
+    // Track errors when retrieving route data
+    const [routesError, setRoutesError] = useState(null);
 
     // Determine whether automatic refreshes are enabled
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -125,6 +136,43 @@ export default function LiveMap() {
 
     }, [autoRefresh, loadVehicles]);
 
+    // Fetch available MBTA routes when the page mounts
+    useEffect(() => {
+
+        let cancelled = false;
+
+        async function loadRoutes() {
+            try {
+                const response = await fetchRoutes();
+
+                // Ignore outdated responses
+                if (!cancelled) {
+                    setRoutes(response.data);
+                    setRoutesError(null);
+                }
+
+            } catch (err) {
+
+                if (!cancelled) {
+                    setRoutesError(err.message);
+                }
+
+            } finally {
+
+                if (!cancelled) {
+                    setRoutesLoading(false);
+                }
+            }
+        }
+
+        loadRoutes();
+
+        // Ignore responses if the page unmounts
+        return () => {
+            cancelled = true;
+        };
+
+    }, []);
     return (
         <section className="page">
 
@@ -171,7 +219,21 @@ export default function LiveMap() {
                 </div>
 
             </div>
+            {/* Temporary route data test */}
+            <div>
+                <p>
+                    Total Routes:{" "}
+                    {routesLoading
+                        ? "Loading..."
+                        : routesError
+                            ? "Error"
+                            : routes.length}
+                </p>
 
+                {routesError && (
+                    <p>{routesError}</p>
+                )}
+            </div>
             {/* Vehicle refresh controls */}
             <div className="refresh-panel">
 
