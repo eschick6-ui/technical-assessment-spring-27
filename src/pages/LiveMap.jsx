@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
+import {
+    useState,
+    useEffect,
+    useCallback,
+    useRef
+} from "react";
 import { fetchVehicles } from "../services/mbtaApi.js";
 import TransitMap from "../components/TransitMap.jsx";
+
+// Refresh vehicle data every 15 seconds
+const REFRESH_INTERVAL = 15000;
 
 export default function LiveMap() {
 
@@ -16,40 +24,106 @@ export default function LiveMap() {
     // Store an error message if the request fails
     const [error, setError] = useState(null);
 
-    // Fetch vehicle data when the page mounts
-    useEffect(() => {
+    // Determine whether automatic refreshes are enabled
+    const [autoRefresh, setAutoRefresh] = useState(true);
 
-        let cancelled = false;
+    // Track whether a refresh is currently in progress
+    const [refreshing, setRefreshing] = useState(false);
 
-        async function loadVehicles() {
-            try {
-                const response = await fetchVehicles({
-                    include: "route,stop"
-                });
+    // Store the time of the last successful API request
+    const [lastRefreshed, setLastRefreshed] = useState(null);
 
-                if (!cancelled) {
-                    setVehicles(response.data);
-                    setIncluded(response.included || []);
-                }
-            } catch (err) {
-                if (!cancelled) {
-                    setError(err.message);
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
+    // Track the active request to prevent overlapping requests
+    const activeRequest = useRef(null);
+
+   // Retrieve the latest vehicle, route, and stop information
+    const loadVehicles = useCallback(async () => {
+
+        // Prevent multiple requests from running simultaneously
+        if (activeRequest.current !== null) {
+            return;
+        }
+
+        // Create a unique identifier for this request
+        const request = {};
+        activeRequest.current = request;
+
+        setRefreshing(true);
+
+        try {
+            const response = await fetchVehicles({
+                include: "route,stop"
+            });
+
+            // Ignore outdated requests
+            if (activeRequest.current !== request) {
+                return;
+            }
+
+            // Update vehicle and related resource information
+            setVehicles(response.data);
+            setIncluded(response.included || []);
+
+            // Record the successful refresh time
+            setLastRefreshed(new Date());
+
+            // Clear any previous API errors
+            setError(null);
+
+        } catch (err) {
+
+            if (activeRequest.current === request) {
+                setError(err.message);
+            }
+
+        } finally {
+
+            if (activeRequest.current === request) {
+                activeRequest.current = null;
+
+                setLoading(false);
+                setRefreshing(false);
             }
         }
 
-        loadVehicles();
+    }, []);
 
-        // Ignore outdated responses if the page unmounts
+    // Load vehicle data when the page initially mounts
+    useEffect(() => {
+
+        // Schedule the initial API request asynchronously
+        const timeoutId = setTimeout(() => {
+            loadVehicles();
+        }, 0);
+
+        // Clean up when leaving the page
         return () => {
-            cancelled = true;
+            clearTimeout(timeoutId);
+            activeRequest.current = null;
         };
 
-    }, []);
+    }, [loadVehicles]);
+
+    // Automatically refresh vehicle data
+    useEffect(() => {
+
+        // Do not create an interval if auto-refresh is disabled
+        if (!autoRefresh) {
+            return;
+        }
+
+        // Retrieve new vehicle data every 15 seconds
+        const intervalId = setInterval(() => {
+            loadVehicles();
+        }, REFRESH_INTERVAL);
+
+        // Remove the interval when the component unmounts
+        // or when auto-refresh is disabled
+        return () => {
+            clearInterval(intervalId);
+        };
+
+    }, [autoRefresh, loadVehicles]);
 
     return (
         <section className="page">
@@ -78,36 +152,121 @@ export default function LiveMap() {
                     <p>Active Vehicles</p>
 
                     <h2>
-                        {loading || error ? "--" : vehicles.length}
+                        {lastRefreshed ? vehicles.length : "--"}
                     </h2>
                 </div>
 
                 <div className="stat-card">
                     <p>API Status</p>
-
+                
                     <h2>
                         {loading
                             ? "Connecting..."
                             : error
-                                ? "Error"
+                                ? lastRefreshed
+                                    ? "Stale Data"
+                                    : "Error"
                                 : "Connected"}
                     </h2>
                 </div>
 
             </div>
 
+            {/* Vehicle refresh controls */}
+            <div className="refresh-panel">
+
+                <div className="refresh-controls">
+
+                    {/* Manual refresh button */}
+                    <button
+                        type="button"
+                        className="refresh-button"
+                        onClick={loadVehicles}
+                        disabled={refreshing}
+                    >
+                        <span
+                            className={`refresh-icon ${
+                                refreshing ? "spinning" : ""
+                            }`}
+                            aria-hidden="true"
+                        >
+                            ↻
+                        </span>
+
+                        {refreshing ? "Refreshing..." : "Refresh Now"}
+                    </button>
+
+                    {/* Automatic refresh toggle */}
+                    <label className="auto-refresh-control">
+
+                        <input
+                            type="checkbox"
+                            className="refresh-toggle"
+                            checked={autoRefresh}
+                            onChange={(event) =>
+                                setAutoRefresh(event.target.checked)
+                            }
+                        />
+
+                        <span>Auto-refresh</span>
+
+                    </label>
+
+                </div>
+
+                {/* Refresh information */}
+                <div className="refresh-information">
+
+                    <div className="refresh-status">
+
+                        <span
+                            className={`refresh-status-dot ${
+                                autoRefresh ? "active" : ""
+                            }`}
+                        />
+
+                        <span>
+                            {autoRefresh
+                                ? `Updating every ${REFRESH_INTERVAL / 1000} seconds`
+                                : "Automatic updates paused"}
+                        </span>
+
+                    </div>
+
+                    <span className="last-refreshed">
+                        Last refreshed:{" "}
+                        {lastRefreshed
+                            ? lastRefreshed.toLocaleTimeString(
+                                "en-US",
+                                { timeZone: "America/New_York" }
+                            )
+                            : "Not yet refreshed"}
+                    </span>
+
+                </div>
+
+            </div>
+
+            {loading && (
+                <p>Loading vehicles...</p>
+            )}
+
             {error && (
-                <p className="error-message">
-                    Unable to load vehicle data: {error}
+                <p className="refresh-error" role="alert">
+                    Unable to retrieve the latest vehicle data: {error}
+                    {lastRefreshed &&
+                        " Displaying the last successfully retrieved data."}
                 </p>
             )}
 
-            <div className="map-wrapper">
-                <TransitMap 
-                    vehicles={vehicles}
-                    included={included}
-                />
-            </div>
+            {!loading && (
+                <div className="map-wrapper">
+                    <TransitMap
+                        vehicles={vehicles}
+                        included={included}
+                    />
+                </div>
+            )}
 
         </section>
     );

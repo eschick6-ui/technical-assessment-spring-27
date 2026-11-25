@@ -561,3 +561,222 @@
         transition: none;
     }
 }
+
+/* Vehicle refresh panel */
+.refresh-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    padding: 16px;
+    margin: 16px 0;
+}
+
+/* Refresh control layout */
+.refresh-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Manual refresh button */
+.refresh-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    padding: 10px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: var(--text-secondary);
+}
+
+.refresh-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Refresh icon */
+.refresh-icon {
+    display: inline-block;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.refresh-icon.spinning {
+    animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Auto-refresh toggle container */
+.auto-refresh-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Custom toggle switch */
+.refresh-toggle {
+    appearance: none;
+    position: relative;
+
+    width: 38px;
+    height: 22px;
+    margin: 0;
+
+    background-color: #475569;
+    border-radius: 20px;
+
+    cursor: pointer;
+    flex-shrink: 0;
+
+    transition: background-color 0.25s ease;
+}
+
+/* Toggle switch circle */
+.refresh-toggle::before {
+    content: "";
+    position: absolute;
+
+    width: 16px;
+    height: 16px;
+    top: 3px;
+    left: 3px;
+
+    background-color: white;
+    border-radius: 50%;
+
+    transition: transform 0.25s ease;
+}
+
+/* Enabled toggle */
+.refresh-toggle:checked {
+    background-color: #00843D;
+}
+
+.refresh-toggle:checked::before {
+    transform: translateX(16px);
+}
+
+/* Keyboard accessibility */
+.refresh-toggle:focus-visible,
+.refresh-button:focus-visible {
+    outline: 2px solid #3388FF;
+    outline-offset: 3px;
+}
+
+/* Refresh information row */
+.refresh-information {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* Automatic refresh status */
+.refresh-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.refresh-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #64748B;
+    flex-shrink: 0;
+}
+
+.refresh-status-dot.active {
+    background-color: #22C55E;
+}
+
+/* Refresh error message */
+.refresh-error {
+    color: #FCA5A5;
+    background-color: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+}
+
+/* Responsive refresh controls */
+@media (max-width: 600px) {
+    .refresh-panel {
+        padding: 12px;
+    }
+
+    .refresh-button {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .auto-refresh-control {
+        font-size: 12px;
+    }
+
+    .refresh-information {
+        flex-direction: column;
+        align-items: flex-start;
+        font-size: 11px;
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .refresh-icon.spinning {
+        animation: none;
+    }
+
+    .refresh-button,
+    .refresh-toggle,
+    .refresh-toggle::before {
+        transition: none;
+    }
+}
