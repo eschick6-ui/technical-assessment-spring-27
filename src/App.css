@@ -1351,6 +1351,37 @@
 }
 
 /* ==============================
+   Service Alert Statistics Grid
+   ============================== */
+
+.alert-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+}
+
+/* Fit refresh controls inside the statistics grid */
+.alert-refresh-panel {
+    margin: 0;
+    min-width: 0;
+    justify-content: center;
+    box-sizing: border-box;
+    background: var(--surface);
+}
+
+/* Stack refresh information vertically */
+.alert-refresh-panel .refresh-information {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+/* Allow refresh controls to wrap if necessary */
+.alert-refresh-panel .refresh-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* ==============================
    Service Alert Filters
    ============================== */
 
@@ -1730,6 +1761,8 @@
     background: rgba(74, 222, 128, 0.1);
 }
 
+
+
 /* ==============================
    Mobile Service Alerts
    ============================== */
@@ -1815,6 +1848,55 @@
 
     .alert-filter-field {
         gap: 6px;
+    }
+
+    .alert-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .alert-refresh-panel {
+        padding: 12px;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    /* Stack the refresh controls vertically */
+    .alert-refresh-panel .refresh-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Reduce the refresh button size */
+    .alert-refresh-panel .refresh-button {
+        font-size: 11px;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .alert-refresh-panel .refresh-icon {
+        font-size: 16px;
+    }
+
+    /* Reduce the auto-refresh label size */
+    .alert-refresh-panel .auto-refresh-control {
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    /* Make the refresh information more compact */
+    .alert-refresh-panel .refresh-information {
+        font-size: 10px;
+        gap: 5px;
+        padding-top: 8px;
+    }
+
+    .alert-refresh-panel .refresh-status,
+    .alert-refresh-panel .last-refreshed {
+        font-size: 10px;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
 }

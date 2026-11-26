@@ -367,8 +367,7 @@ export default function ServiceAlerts() {
             </div>
 
             {/* Alert statistics */}
-            <div className="stats-grid">
-
+            <div className="stats-grid alert-stats-grid">
                 <div className="stat-card">
                     <p>Active Alerts</p>
 
@@ -393,79 +392,79 @@ export default function ServiceAlerts() {
                     </h2>
                 </div>
 
-            </div>
+                {/* Alert refresh controls */}
+                <div className="refresh-panel">
 
-            {/* Alert refresh controls */}
-            <div className="refresh-panel">
+                    <div className="refresh-controls">
 
-                <div className="refresh-controls">
-
-                    <button
-                        type="button"
-                        className="refresh-button"
-                        onClick={loadAlerts}
-                        disabled={loading || refreshing}
-                    >
-
-                        <span
-                            className={`refresh-icon ${
-                                refreshing ? "spinning" : ""
-                            }`}
-                            aria-hidden="true"
+                        <button
+                            type="button"
+                            className="refresh-button"
+                            onClick={loadAlerts}
+                            disabled={loading || refreshing}
                         >
-                            ↻
-                        </span>
 
-                        {refreshing ? "Refreshing..." : "Refresh Now"}
+                            <span
+                                className={`refresh-icon ${
+                                    refreshing ? "spinning" : ""
+                                }`}
+                                aria-hidden="true"
+                            >
+                                ↻
+                            </span>
 
-                    </button>
+                            {refreshing ? "Refreshing..." : "Refresh Now"}
 
-                    <label className="auto-refresh-control">
+                        </button>
 
-                        <input
-                            type="checkbox"
-                            className="refresh-toggle"
-                            checked={autoRefresh}
-                            onChange={(event) =>
-                                setAutoRefresh(event.target.checked)
-                            }
-                        />
+                        <label className="auto-refresh-control">
 
-                        <span>Auto-refresh</span>
+                            <input
+                                type="checkbox"
+                                className="refresh-toggle"
+                                checked={autoRefresh}
+                                onChange={(event) =>
+                                    setAutoRefresh(event.target.checked)
+                                }
+                            />
 
-                    </label>
+                            <span>Auto-refresh</span>
 
-                </div>
-
-                <div className="refresh-information">
-
-                    <div className="refresh-status">
-
-                        <span
-                            className={`refresh-status-dot ${
-                                autoRefresh ? "active" : ""
-                            }`}
-                        />
-
-                        <span>
-                            {autoRefresh
-                                ? `Updating every ${ALERT_REFRESH_INTERVAL / 1000} seconds`
-                                : "Automatic updates paused"}
-                        </span>
+                        </label>
 
                     </div>
 
-                    <span className="last-refreshed">
+                    <div className="refresh-information">
 
-                        Last refreshed:{" "}
+                        <div className="refresh-status">
 
-                        {lastRefreshed
-                            ? lastRefreshed.toLocaleTimeString("en-US", {
-                                timeZone: "America/New_York"
-                            })
-                            : "Not yet refreshed"}
+                            <span
+                                className={`refresh-status-dot ${
+                                    autoRefresh ? "active" : ""
+                                }`}
+                            />
 
-                    </span>
+                            <span>
+                                {autoRefresh
+                                    ? `Updating every ${ALERT_REFRESH_INTERVAL / 1000} seconds`
+                                    : "Automatic updates paused"}
+                            </span>
+
+                        </div>
+
+                        <span className="last-refreshed">
+
+                            Last refreshed:{" "}
+
+                            {lastRefreshed
+                                ? lastRefreshed.toLocaleTimeString("en-US", {
+                                    timeZone: "America/New_York"
+                                })
+                                : "Not yet refreshed"}
+
+                        </span>
+
+                    </div>
 
                 </div>
 
