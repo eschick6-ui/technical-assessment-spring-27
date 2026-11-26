@@ -104,6 +104,29 @@ function matchesRouteSearch(route, routeId, query) {
     );
 }
 
+// Generate a readable display name for each route
+function getRouteDisplayName(route) {
+
+    const { short_name, long_name, type } = route.attributes;
+
+    // Display generic shuttles without duplicate names
+    if (route.id === "Shuttle-Generic") {
+        return "Shuttle";
+    }
+
+    // Include the route number for buses with distinct names
+    if (
+        type === 3 &&
+        short_name &&
+        long_name &&
+        short_name !== long_name
+    ) {
+        return `${short_name} · ${long_name}`;
+    }
+
+    return long_name || short_name || route.id;
+}
+
 export default function LiveMap() {
 
     // Store the vehicles returned by the API
@@ -134,6 +157,9 @@ export default function LiveMap() {
 
     // Store the user's current route search query
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Store the exact route selected from the search dropdown
+    const [selectedRouteId, setSelectedRouteId] = useState(null);
 
     // Determine whether automatic refreshes are enabled
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -308,6 +334,27 @@ export default function LiveMap() {
 
     }
 
+    // Update the search query when the user types
+    function handleSearchChange(query) {
+
+        setSearchQuery(query);
+
+        // Return to general searching when the user edits the input
+        setSelectedRouteId(null);
+
+    }
+
+    // Select an exact route from the dropdown
+    function handleRouteSelect(route) {
+
+        // Store the selected route's unique ID
+        setSelectedRouteId(route.id);
+
+        // Autofill the search input with the route's display name
+        setSearchQuery(getRouteDisplayName(route));
+
+    }
+
     // Create a lookup object for accessing routes by ID
     const routeLookup = {};
 
@@ -318,7 +365,7 @@ export default function LiveMap() {
     // Filter vehicles by transit category and route search
     const filteredVehicles = vehicles.filter((vehicle) => {
 
-        // Retrieve the route ID associated with the vehicle
+        // Retrieve the route ID associated with this vehicle
         const routeId = vehicle.relationships?.route?.data?.id;
 
         // Find the corresponding route object
@@ -332,20 +379,43 @@ export default function LiveMap() {
             ? selectedCategories.includes(category)
             : selectedCategories.length === TRANSIT_CATEGORIES.length;
 
-        // Check whether the vehicle matches the search query
-        const matchesSearch = matchesRouteSearch(
-            route,
-            routeId,
-            searchQuery
-        );
+        // Match an exact route if a dropdown suggestion was selected
+        const matchesSearch = selectedRouteId !== null
+            ? routeId === selectedRouteId
+            : matchesRouteSearch(route, routeId, searchQuery);
 
-        // Display the vehicle only if both conditions are satisfied
+        // Display vehicles satisfying both conditions
         return matchesCategory && matchesSearch;
 
     });
 
-    // Identify routes matching the selected categories and search query
-    const matchingRoutes = Object.values(routeLookup).filter((route) => {
+    // Create an array of all available routes for searching
+    const availableRoutes = Object.values(routeLookup);
+
+    // Check whether generic shuttle vehicles are currently available
+    const hasGenericShuttles = vehicles.some((vehicle) =>
+        vehicle.relationships?.route?.data?.id === "Shuttle-Generic"
+    );
+
+    // Include generic shuttles in the search dropdown
+    // when their route object is missing from the API response
+    if (hasGenericShuttles && !routeLookup["Shuttle-Generic"]) {
+
+        availableRoutes.push({
+            id: "Shuttle-Generic",
+            type: "route",
+            attributes: {
+                long_name: "Shuttle",
+                short_name: "Shuttle",
+                type: 3,
+                color: "FFC72C"
+            }
+        });
+
+    }
+
+    // Find routes matching the selected categories and search query
+    const matchingRoutes = availableRoutes.filter((route) => {
 
         const category = getTransitCategory(route, route.id);
 
@@ -353,27 +423,19 @@ export default function LiveMap() {
             ? selectedCategories.includes(category)
             : selectedCategories.length === TRANSIT_CATEGORIES.length;
 
-        return matchesCategory &&
-            matchesRouteSearch(route, route.id, searchQuery);
+        const matchesSearch = selectedRouteId !== null
+            ? route.id === selectedRouteId
+            : matchesRouteSearch(route, route.id, searchQuery);
+
+        return matchesCategory && matchesSearch;
 
     });
 
-    // Check for generic shuttles missing from the route lookup
-    const hasMatchingGenericShuttles =
-        !routeLookup["Shuttle-Generic"] &&
-        selectedCategories.includes("bus") &&
-        matchesRouteSearch(
-            undefined,
-            "Shuttle-Generic",
-            searchQuery
-        ) &&
-        vehicles.some((vehicle) =>
-            vehicle.relationships?.route?.data?.id === "Shuttle-Generic"
-        );
+    // Count all routes matching the current filters
+    const matchingRouteCount = matchingRoutes.length;
 
-    // Count matching routes, including generic shuttle service
-    const matchingRouteCount =
-        matchingRoutes.length + (hasMatchingGenericShuttles ? 1 : 0);
+    // Limit dropdown suggestions to keep the interface manageable
+    const routeSuggestions = matchingRoutes.slice(0, 10);
 
     return (
         <section className="page">
@@ -495,7 +557,7 @@ export default function LiveMap() {
                 </div>
 
             </div>
-            {/* Transit line filters */}
+            {/* Transit line filters and route search */}
             <TransitFilters
                 categories={TRANSIT_CATEGORIES}
                 selectedCategories={selectedCategories}
@@ -507,8 +569,11 @@ export default function LiveMap() {
                 loading={routesLoading}
                 error={routesError}
                 searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
+                onSearchChange={handleSearchChange}
                 matchingRouteCount={matchingRouteCount}
+                routeSuggestions={routeSuggestions}
+                onRouteSelect={handleRouteSelect}
+                getRouteDisplayName={getRouteDisplayName}
             />
 
             {loading && (

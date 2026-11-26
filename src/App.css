@@ -1139,3 +1139,206 @@
     }
 
 }
+
+/* ==============================
+   Route Autocomplete Dropdown
+   ============================== */
+
+/* Position the dropdown relative to the search input */
+
+.route-search-container {
+    position: relative;
+}
+
+/* Dropdown toggle button */
+
+.route-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.route-dropdown-toggle:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.route-dropdown-toggle:focus-visible {
+    outline: 2px solid var(--text-secondary);
+}
+
+/* Animated dropdown arrow */
+
+.route-dropdown-arrow {
+    transition: transform 0.2s ease;
+}
+
+.route-dropdown-arrow.expanded {
+    transform: rotate(180deg);
+}
+
+/* Dropdown container */
+
+.route-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: route-dropdown-appear 0.15s ease-out;
+}
+
+/* Dropdown entrance animation */
+
+@keyframes route-dropdown-appear {
+
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+/* Dropdown header */
+
+.route-dropdown-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Scrollable suggestion list */
+
+.route-suggestion-list {
+    max-height: 260px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Individual route suggestion */
+
+.route-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.route-suggestion:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+
+.route-suggestion:hover,
+.route-suggestion.active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Route color indicator */
+
+.route-suggestion-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+
+/* Route display name */
+
+.route-suggestion-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Suggestion selection indicator */
+
+.route-suggestion-arrow {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Empty dropdown message */
+
+.route-dropdown-empty {
+    margin: 0;
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Dropdown footer */
+
+.route-dropdown-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* Mobile route autocomplete */
+
+@media (max-width: 600px) {
+
+    .route-dropdown-toggle {
+        width: 32px;
+        height: 32px;
+    }
+
+    .route-suggestion-list {
+        max-height: 220px;
+    }
+
+    .route-suggestion {
+        padding: 14px 12px;
+        font-size: 12px;
+    }
+
+    .route-dropdown-header,
+    .route-dropdown-footer {
+        padding: 10px 12px;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .route-dropdown {
+        animation: none;
+    }
+
+    .route-dropdown-arrow,
+    .route-suggestion {
+        transition: none;
+    }
+
+}
