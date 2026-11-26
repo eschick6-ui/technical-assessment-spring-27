@@ -283,7 +283,7 @@ export default function TransitFilters({
                             id="route-search-input"
                             type="search"
                             className="route-search-input"
-                            placeholder="Search by route name or number..."
+                            placeholder="Search name or number..."
                             value={searchQuery}
                             autoComplete="off"
                             role="combobox"

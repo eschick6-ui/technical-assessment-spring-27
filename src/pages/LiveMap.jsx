@@ -91,17 +91,36 @@ function matchesRouteSearch(route, routeId, query) {
         return true;
     }
 
-    // Collect searchable route information
+    const shortName = route?.attributes?.short_name;
+    const longName = route?.attributes?.long_name;
+
+    // Determine the transit category
+    const category = getTransitCategory(route, routeId);
+
+    // Collect searchable fields for all transit categories
     const searchableFields = [
         routeId,
-        route?.attributes?.long_name,
-        route?.attributes?.short_name
+        longName,
+        shortName,
+        route ? getRouteDisplayName(route) : ""
     ];
+
+    // Only support the "Route" keyword for buses
+    if (category === "bus") {
+
+        searchableFields.push(
+            routeId ? `Route ${routeId}` : "",
+            shortName ? `Route ${shortName}` : "",
+            longName ? `Route ${longName}` : ""
+        );
+
+    }
 
     // Check whether any route field contains the search query
     return searchableFields.some((field) =>
         field?.toLowerCase().includes(normalizedQuery)
     );
+
 }
 
 // Generate a readable display name for each route
@@ -327,10 +346,12 @@ export default function LiveMap() {
 
     }
 
-    // Deselect every transit category
+    // Clear all transit categories and reset the route search
     function clearAllCategories() {
 
         setSelectedCategories([]);
+
+        handleSearchChange("");
 
     }
 

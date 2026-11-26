@@ -1116,8 +1116,9 @@
     }
 
     .route-search-input {
-        font-size: 16px;
+        font-size: clamp(12px, 3.5vw, 16px);
         padding: 10px 0;
+        text-overflow: ellipsis;
     }
 
     .route-search-icon {
@@ -1309,9 +1310,15 @@
 
 @media (max-width: 600px) {
 
-    .route-dropdown-toggle {
-        width: 32px;
+    .route-dropdown-toggle,
+    .route-search-clear {
+        width: 26px;
         height: 32px;
+    }
+
+    .route-search-input-wrapper {
+        gap: 6px;
+        padding: 0 8px;
     }
 
     .route-suggestion-list {
