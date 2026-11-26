@@ -231,10 +231,15 @@ export default function TransitMap({
                         "Unknown Route";
 
                     // Include the route number for bus routes
+                    // Format the route title without repeating route names
                     const routeTitle =
-                        route?.type === 3 && route?.short_name
-                            ? `${route.short_name} · ${routeName}`
-                            : routeName;
+                        routeId === "Shuttle-Generic"
+                            ? "Shuttle"
+                            : route?.type === 3 &&
+                            route?.short_name &&
+                            route.short_name !== routeName
+                                ? `${route.short_name} · ${routeName}`
+                                : routeName;
                     
                     // Determine the vehicle's direction
                     const direction =
