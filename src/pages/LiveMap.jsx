@@ -80,6 +80,30 @@ function getTransitCategory(route, routeId = route?.id) {
     return null;
 }
 
+// Determine whether a route matches the user's search query
+function matchesRouteSearch(route, routeId, query) {
+
+    // Normalize the query to make searching case-insensitive
+    const normalizedQuery = query.trim().toLowerCase();
+
+    // An empty search query matches every route
+    if (!normalizedQuery) {
+        return true;
+    }
+
+    // Collect searchable route information
+    const searchableFields = [
+        routeId,
+        route?.attributes?.long_name,
+        route?.attributes?.short_name
+    ];
+
+    // Check whether any route field contains the search query
+    return searchableFields.some((field) =>
+        field?.toLowerCase().includes(normalizedQuery)
+    );
+}
+
 export default function LiveMap() {
 
     // Store the vehicles returned by the API
@@ -107,6 +131,9 @@ export default function LiveMap() {
     const [selectedCategories, setSelectedCategories] = useState(
         TRANSIT_CATEGORIES.map((category) => category.id)
     );
+
+    // Store the user's current route search query
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Determine whether automatic refreshes are enabled
     const [autoRefresh, setAutoRefresh] = useState(true);
@@ -288,49 +315,65 @@ export default function LiveMap() {
         routeLookup[route.id] = route;
     });
 
-    // Only display vehicles belonging to selected transit categories
+    // Filter vehicles by transit category and route search
     const filteredVehicles = vehicles.filter((vehicle) => {
 
-        // Retrieve the route ID associated with this vehicle
+        // Retrieve the route ID associated with the vehicle
         const routeId = vehicle.relationships?.route?.data?.id;
 
-        // Find the corresponding route
+        // Find the corresponding route object
         const route = routeLookup[routeId];
 
         // Determine the vehicle's transit category
         const category = getTransitCategory(route, routeId);
 
-        // Preserve uncategorized vehicles when all filters are selected
-        if (!category) {
-            return selectedCategories.length === TRANSIT_CATEGORIES.length;
-        }
+        // Check whether the vehicle matches the selected categories
+        const matchesCategory = category
+            ? selectedCategories.includes(category)
+            : selectedCategories.length === TRANSIT_CATEGORIES.length;
 
-        // Check whether the category is currently selected
-        return selectedCategories.includes(category);
+        // Check whether the vehicle matches the search query
+        const matchesSearch = matchesRouteSearch(
+            route,
+            routeId,
+            searchQuery
+        );
+
+        // Display the vehicle only if both conditions are satisfied
+        return matchesCategory && matchesSearch;
 
     });
-    console.table(
-        vehicles
-            .filter((vehicle) => {
-                const routeId = vehicle.relationships?.route?.data?.id;
-                const route = routeLookup[routeId];
 
-                return !getTransitCategory(route);
-            })
-            .map((vehicle) => {
-                const routeId = vehicle.relationships?.route?.data?.id;
-                const route = routeLookup[routeId];
+    // Identify routes matching the selected categories and search query
+    const matchingRoutes = Object.values(routeLookup).filter((route) => {
 
-                return {
-                    vehicleId: vehicle.id,
-                    routeId: routeId,
-                    routeFound: Boolean(route),
-                    longName: route?.attributes?.long_name,
-                    shortName: route?.attributes?.short_name,
-                    type: route?.attributes?.type
-                };
-            })
-    );
+        const category = getTransitCategory(route, route.id);
+
+        const matchesCategory = category
+            ? selectedCategories.includes(category)
+            : selectedCategories.length === TRANSIT_CATEGORIES.length;
+
+        return matchesCategory &&
+            matchesRouteSearch(route, route.id, searchQuery);
+
+    });
+
+    // Check for generic shuttles missing from the route lookup
+    const hasMatchingGenericShuttles =
+        !routeLookup["Shuttle-Generic"] &&
+        selectedCategories.includes("bus") &&
+        matchesRouteSearch(
+            undefined,
+            "Shuttle-Generic",
+            searchQuery
+        ) &&
+        vehicles.some((vehicle) =>
+            vehicle.relationships?.route?.data?.id === "Shuttle-Generic"
+        );
+
+    // Count matching routes, including generic shuttle service
+    const matchingRouteCount =
+        matchingRoutes.length + (hasMatchingGenericShuttles ? 1 : 0);
 
     return (
         <section className="page">
@@ -463,6 +506,9 @@ export default function LiveMap() {
                 visibleVehicles={filteredVehicles.length}
                 loading={routesLoading}
                 error={routesError}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                matchingRouteCount={matchingRouteCount}
             />
 
             {loading && (

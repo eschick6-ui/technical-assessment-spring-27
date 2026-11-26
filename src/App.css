@@ -997,3 +997,145 @@
     }
 
 }
+
+/* ==============================
+   Route Search
+   ============================== */
+
+.route-search {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.route-search-label {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Search input container */
+
+.route-search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background: rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.2s ease;
+}
+
+.route-search-input-wrapper:focus-within {
+    border-color: var(--text-secondary);
+}
+
+/* Search icon */
+
+.route-search-icon {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+/* Search input */
+
+.route-search-input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.route-search-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.75;
+}
+
+/* Hide the browser's default search clear button */
+
+.route-search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Custom clear button */
+
+.route-search-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.route-search-clear:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.route-search-clear:focus-visible {
+    outline: 2px solid var(--text-secondary);
+}
+
+/* Search feedback */
+
+.route-search-feedback {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+/* Mobile route search */
+
+@media (max-width: 600px) {
+
+    .route-search {
+        gap: 6px;
+    }
+
+    .route-search-input-wrapper {
+        padding: 0 10px;
+        gap: 8px;
+    }
+
+    .route-search-input {
+        font-size: 16px;
+        padding: 10px 0;
+    }
+
+    .route-search-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .route-search-clear {
+        width: 32px;
+        height: 32px;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .route-search-input-wrapper {
+        transition: none;
+    }
+
+}
