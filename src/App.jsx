@@ -1,10 +1,12 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
 
 import LiveMap from "./pages/LiveMap.jsx";
 import ServiceAlerts from "./pages/ServiceAlerts.jsx";
-import Analytics from "./pages/Analytics.jsx";
+// Load the Analytics page only when it is needed
+const Analytics = lazy(() => import("./pages/Analytics"));
 import MyCommute from "./pages/MyCommute.jsx";
 
 import "./App.css";
@@ -31,7 +33,19 @@ export default function App() {
 
                     <Route
                         path="/analytics"
-                        element={<Analytics />}
+                        element={
+                            <Suspense
+                                fallback={
+                                    <section className="page">
+                                        <p className="page-loading">
+                                            Loading analytics...
+                                        </p>
+                                    </section>
+                                }
+                            >
+                                <Analytics />
+                            </Suspense>
+                        }
                     />
 
                     <Route
