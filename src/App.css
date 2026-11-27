@@ -1978,3 +1978,265 @@
     }
 
 }
+
+/* =========================
+   Analytics Dashboard
+   ========================= */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.analytics-card {
+    min-width: 0;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.analytics-card-wide {
+    grid-column: 1 / -1;
+}
+
+.analytics-card-header {
+    margin-bottom: 20px;
+}
+
+.analytics-card-header h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.analytics-card-header p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.analytics-chart {
+    width: 100%;
+    height: 300px;
+    min-width: 0;
+}
+
+.analytics-chart-horizontal {
+    height: 280px;
+}
+
+.analytics-chart-note {
+    margin: 16px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Alert severity donut chart */
+
+.analytics-donut-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.analytics-donut-chart {
+    position: relative;
+    width: 100%;
+    height: 240px;
+}
+
+.analytics-donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    pointer-events: none;
+}
+
+.analytics-donut-center strong {
+    font-size: 32px;
+    color: var(--text-primary);
+}
+
+.analytics-donut-center span {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.analytics-severity-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.analytics-severity-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.analytics-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.analytics-severity-name {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.analytics-severity-row strong {
+    color: var(--text-primary);
+}
+
+.analytics-severity-percentage {
+    min-width: 48px;
+    text-align: right;
+    color: var(--text-secondary);
+}
+
+/* Analytics chart tooltips */
+
+.analytics-tooltip {
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.analytics-tooltip-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.analytics-tooltip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.analytics-tooltip p {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.analytics-tooltip p strong {
+    color: var(--text-primary);
+}
+
+.analytics-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Analytics tablet layout */
+
+@media (max-width: 900px) {
+
+    .analytics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .analytics-card-wide {
+        grid-column: auto;
+    }
+
+}
+
+/* Analytics mobile layout */
+
+@media (max-width: 600px) {
+
+    .analytics-grid {
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .analytics-card {
+        padding: 14px;
+    }
+
+    .analytics-card-header {
+        margin-bottom: 14px;
+    }
+
+    .analytics-card-header h2 {
+        font-size: 16px;
+    }
+
+    .analytics-card-header p {
+        font-size: 12px;
+    }
+
+    .analytics-chart {
+        height: 240px;
+    }
+
+    .analytics-chart-horizontal {
+        height: 260px;
+    }
+
+    .analytics-donut-chart {
+        height: 200px;
+    }
+
+    .analytics-donut-center strong {
+        font-size: 26px;
+    }
+
+    .analytics-donut-center span {
+        font-size: 10px;
+    }
+
+    .analytics-severity-row {
+        font-size: 12px;
+    }
+
+    .analytics-chart-note {
+        font-size: 11px;
+    }
+
+    .analytics-tooltip {
+        padding: 10px;
+    }
+
+    .analytics-tooltip-title {
+        font-size: 12px;
+    }
+
+    .analytics-tooltip p {
+        font-size: 11px;
+    }
+
+    .analytics-card .recharts-cartesian-axis-tick-value {
+        font-size: 10px;
+    }
+
+}

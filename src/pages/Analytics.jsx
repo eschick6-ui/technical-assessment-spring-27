@@ -6,26 +6,29 @@ import {
 } from "../services/mbtaApi";
 import {
     createRouteLookup,
-    getVehicleAnalytics
-    //getSeverityAnalytics,
-    //getAlertAnalytics
+    getVehicleAnalytics,
+    getSeverityAnalytics,
+    getAlertAnalytics
 } from "../utils/analyticsUtils";
 import {
-    ResponsiveContainer,
     BarChart,
     Bar,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
-    Cell
+    ResponsiveContainer,
+    Cell,
+    PieChart,
+    Pie
 } from "recharts";
+import AnalyticsTooltip from "../components/AnalyticsTooltip";
 
 export default function Analytics() {
     // Store MBTA API data
     const [vehicles, setVehicles] = useState([]);
     const [routes, setRoutes] = useState([]);
-    const [, setAlerts] = useState([]);
+    const [alerts, setAlerts] = useState([]);
 
     // Track loading and error states
     const [loading, setLoading] = useState(true);
@@ -52,7 +55,7 @@ export default function Analytics() {
                     fetchRoutes(),
                     fetchAlerts({
                         "filter[datetime]": "NOW",
-                        "filter[activity]": "BOARD,EXIT,RIDE",
+                        "filter[activity]": "ALL",
                         include: "routes"
                     })
                 ]);
@@ -111,14 +114,14 @@ export default function Analytics() {
     }, [vehicles, routeLookup]);
 
     // Calculate alerts by severity
-    //const severityAnalytics = useMemo(() => {
-    //    return getSeverityAnalytics(alerts);
-    //}, [alerts]);
+    const severityAnalytics = useMemo(() => {
+        return getSeverityAnalytics(alerts);
+    }, [alerts]);
 
     // Calculate alerts by transit category
-    //const alertAnalytics = useMemo(() => {
-    //    return getAlertAnalytics(alerts, routeLookup);
-    //}, [alerts, routeLookup]);
+    const alertAnalytics = useMemo(() => {
+        return getAlertAnalytics(alerts, routeLookup);
+    }, [alerts, routeLookup]);
 
     return (
         <section className="page">
@@ -148,71 +151,291 @@ export default function Analytics() {
 
             {!loading && !error && (
 
-                <div className="analytics-chart-card">
+                <div className="analytics-grid">
 
-                    <h2>Active Vehicles by Transit Line</h2>
+                    {/* Active vehicles by transit category */}
+                    <div className="analytics-card analytics-card-wide">
 
-                    <p>Number of active vehicles across the MBTA network.</p>
+                        <div className="analytics-card-header">
 
-                    <div className="analytics-chart">
+                            <h2>Active Vehicles by Transit Category</h2>
 
-                        <ResponsiveContainer width="100%" height="100%">
+                            <p>
+                                Current vehicle distribution across the MBTA network.
+                            </p>
 
-                            <BarChart data={vehicleAnalytics}>
+                        </div>
 
-                                <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#334155"
-                                    vertical={false}
-                                />
+                        <div className="analytics-chart">
 
-                                <XAxis
-                                    dataKey="line"
-                                    stroke="#94A3B8"
-                                    tick={{ fontSize: 12 }}
-                                />
+                            <ResponsiveContainer width="100%" height="100%">
 
-                                <YAxis
-                                    stroke="#94A3B8"
-                                    tick={{ fontSize: 12 }}
-                                    allowDecimals={false}
-                                />
-
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: "#19212E",
-                                        border: "1px solid #334155",
-                                        borderRadius: "8px"
+                                <BarChart
+                                    data={vehicleAnalytics}
+                                    margin={{
+                                        top: 10,
+                                        right: 10,
+                                        left: -15,
+                                        bottom: 5
                                     }}
-                                    labelStyle={{
-                                        color: "#F1F5F9"
-                                    }}
-                                    itemStyle={{
-                                        color: "#F1F5F9"
-                                    }}
-                                    cursor={{
-                                        fill: "rgba(255, 255, 255, 0.05)"
-                                    }}
-                                />
-
-                                <Bar
-                                    dataKey="vehicles"
-                                    name="Active Vehicles"
-                                    radius={[6, 6, 0, 0]}
                                 >
 
-                                    {vehicleAnalytics.map((entry) => (
-                                        <Cell
-                                            key={entry.line}
-                                            fill={entry.color}
-                                        />
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#303C4D"
+                                        vertical={false}
+                                    />
+
+                                    <XAxis
+                                        dataKey="line"
+                                        stroke="#94A3B8"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fontSize: 12 }}
+                                        interval={0}
+                                    />
+
+                                    <YAxis
+                                        stroke="#94A3B8"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        allowDecimals={false}
+                                        tick={{ fontSize: 12 }}
+                                    />
+
+                                    <Tooltip
+                                        content={
+                                            <AnalyticsTooltip valueLabel="Vehicles" />
+                                        }
+                                        cursor={{
+                                            fill: "rgba(148, 163, 184, 0.08)"
+                                        }}
+                                    />
+
+                                    <Bar
+                                        dataKey="vehicles"
+                                        radius={[5, 5, 0, 0]}
+                                        maxBarSize={65}
+                                    >
+
+                                        {vehicleAnalytics.map((category) => (
+                                            <Cell
+                                                key={category.id}
+                                                fill={category.color}
+                                            />
+                                        ))}
+
+                                    </Bar>
+
+                                </BarChart>
+
+                            </ResponsiveContainer>
+
+                        </div>
+
+                    </div>
+
+                    {/* Alert severity distribution */}
+                    <div className="analytics-card">
+
+                        <div className="analytics-card-header">
+
+                            <h2>Alert Severity Distribution</h2>
+
+                            <p>
+                                Breakdown of active alerts by severity level.
+                            </p>
+
+                        </div>
+
+                        {alerts.length === 0 ? (
+
+                            <div className="analytics-empty">
+                                No active service alerts.
+                            </div>
+
+                        ) : (
+
+                            <div className="analytics-donut-container">
+
+                                <div className="analytics-donut-chart">
+
+                                    <ResponsiveContainer width="100%" height="100%">
+
+                                        <PieChart>
+
+                                            <Pie
+                                                data={severityAnalytics}
+                                                dataKey="count"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius="58%"
+                                                outerRadius="85%"
+                                                paddingAngle={2}
+                                                stroke="none"
+                                            >
+
+                                                {severityAnalytics.map((severity) => (
+                                                    <Cell
+                                                        key={severity.name}
+                                                        fill={severity.color}
+                                                    />
+                                                ))}
+
+                                            </Pie>
+
+                                            <Tooltip
+                                                content={
+                                                    <AnalyticsTooltip valueLabel="Alerts" />
+                                                }
+                                            />
+
+                                        </PieChart>
+
+                                    </ResponsiveContainer>
+
+                                    {/* Total alerts displayed in the center */}
+                                    <div className="analytics-donut-center">
+
+                                        <strong>{alerts.length}</strong>
+
+                                        <span>Total Alerts</span>
+
+                                    </div>
+
+                                </div>
+
+                                {/* Severity legend */}
+                                <div className="analytics-severity-legend">
+
+                                    {severityAnalytics.map((severity) => (
+
+                                        <div
+                                            key={severity.name}
+                                            className="analytics-severity-row"
+                                        >
+
+                                            <span
+                                                className="analytics-legend-dot"
+                                                style={{
+                                                    backgroundColor: severity.color
+                                                }}
+                                            />
+
+                                            <span className="analytics-severity-name">
+                                                {severity.name}
+                                            </span>
+
+                                            <strong>{severity.count}</strong>
+
+                                            <span className="analytics-severity-percentage">
+
+                                                {(
+                                                    severity.count / alerts.length * 100
+                                                ).toFixed(1)}%
+
+                                            </span>
+
+                                        </div>
+
                                     ))}
 
-                                </Bar>
+                                </div>
 
-                            </BarChart>
+                            </div>
 
-                        </ResponsiveContainer>
+                        )}
+
+                    </div>
+
+                    {/* Service alerts by transit category */}
+                    <div className="analytics-card">
+
+                        <div className="analytics-card-header">
+
+                            <h2>Alerts by Transit Category</h2>
+
+                            <p>
+                                Number of active alerts affecting each transit category.
+                            </p>
+
+                        </div>
+
+                        <div className="analytics-chart analytics-chart-horizontal">
+
+                            <ResponsiveContainer width="100%" height="100%">
+
+                                <BarChart
+                                    data={alertAnalytics}
+                                    layout="vertical"
+                                    margin={{
+                                        top: 5,
+                                        right: 15,
+                                        left: 0,
+                                        bottom: 5
+                                    }}
+                                >
+
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#303C4D"
+                                        horizontal={false}
+                                    />
+
+                                    <XAxis
+                                        type="number"
+                                        stroke="#94A3B8"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        allowDecimals={false}
+                                        tick={{ fontSize: 12 }}
+                                    />
+
+                                    <YAxis
+                                        type="category"
+                                        dataKey="line"
+                                        stroke="#94A3B8"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fontSize: 12 }}
+                                        width={55}
+                                    />
+
+                                    <Tooltip
+                                        content={
+                                            <AnalyticsTooltip valueLabel="Alerts" />
+                                        }
+                                        cursor={{
+                                            fill: "rgba(148, 163, 184, 0.08)"
+                                        }}
+                                    />
+
+                                    <Bar
+                                        dataKey="alerts"
+                                        radius={[0, 5, 5, 0]}
+                                        maxBarSize={25}
+                                    >
+
+                                        {alertAnalytics.map((category) => (
+                                            <Cell
+                                                key={category.id}
+                                                fill={category.color}
+                                            />
+                                        ))}
+
+                                    </Bar>
+
+                                </BarChart>
+
+                            </ResponsiveContainer>
+
+                        </div>
+
+                        <p className="analytics-chart-note">
+                            Alerts affecting multiple transit categories may be
+                            counted in more than one category.
+                        </p>
 
                     </div>
 
