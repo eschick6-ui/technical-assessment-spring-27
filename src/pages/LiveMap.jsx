@@ -10,21 +10,13 @@ import {
 } from "../services/mbtaApi";
 import TransitMap from "../components/TransitMap.jsx";
 import TransitFilters from "../components/TransitFilters";
-import { getTransitCategory } from "../utils/transitUtils";
+import {
+    TRANSIT_CATEGORIES,
+    getTransitCategory
+} from "../utils/transitUtils";
 
 // Refresh vehicle data every 15 seconds
 const REFRESH_INTERVAL = 15000;
-
-const TRANSIT_CATEGORIES = [
-    { id: "red", name: "Red Line", color: "#DA291C" },
-    { id: "orange", name: "Orange Line", color: "#ED8B00" },
-    { id: "blue", name: "Blue Line", color: "#003DA5" },
-    { id: "green", name: "Green Line", color: "#00843D" },
-    { id: "commuter", name: "Commuter Rail", color: "#80276C" },
-    { id: "silver", name: "Silver Line", color: "#7C878E" },
-    { id: "bus", name: "Bus", color: "#FFC72C" },
-    { id: "ferry", name: "Ferry", color: "#008EAA" }
-];
 
 // Determine whether a route matches the user's search query
 function matchesRouteSearch(route, routeId, query) {
