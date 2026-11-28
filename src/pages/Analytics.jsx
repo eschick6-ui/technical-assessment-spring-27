@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    useRef
+} from "react";
 import {
     fetchVehicles,
     fetchRoutes,
@@ -27,6 +33,9 @@ import {
 import AnalyticsTooltip from "../components/AnalyticsTooltip";
 import ChaosMeter from "../components/ChaosMeter";
 
+// Refresh analytics data every 60 seconds
+const REFRESH_INTERVAL = 60000;
+
 export default function Analytics() {
     // Store MBTA API data
     const [vehicles, setVehicles] = useState([]);
@@ -37,74 +46,112 @@ export default function Analytics() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Control automatic and manual data refreshes
+    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastRefreshed, setLastRefreshed] = useState(null);
+
+    // Prevent overlapping requests and outdated responses
+    const activeRequest = useRef(null);
+
+    // Retrieve the latest analytics data
+    const loadAnalytics = useCallback(async () => {
+
+        // Prevent overlapping API requests
+        if (activeRequest.current !== null) {
+            return;
+        }
+
+        // Create a unique identifier for this request
+        const request = {};
+        activeRequest.current = request;
+
+        setRefreshing(true);
+
+        try {
+
+            // Fetch all three datasets concurrently
+            const [
+                vehicleResponse,
+                routeResponse,
+                alertResponse
+            ] = await Promise.all([
+                fetchVehicles({
+                    include: "route"
+                }),
+                fetchRoutes(),
+                fetchAlerts({
+                    "filter[datetime]": "NOW",
+                    "filter[activity]": "ALL",
+                    include: "routes"
+                })
+            ]);
+
+            // Ignore outdated responses
+            if (activeRequest.current !== request) {
+                return;
+            }
+
+            // Update analytics datasets
+            setVehicles(vehicleResponse.data);
+            setRoutes(routeResponse.data);
+            setAlerts(alertResponse.data);
+
+            // Record the successful refresh
+            setLastRefreshed(new Date());
+            setError(null);
+
+        } catch (err) {
+
+            // Only update errors for the current request
+            if (activeRequest.current === request) {
+                setError(err.message);
+            }
+
+        } finally {
+
+            // Reset loading states for the current request
+            if (activeRequest.current === request) {
+                activeRequest.current = null;
+                setLoading(false);
+                setRefreshing(false);
+            }
+        }
+
+    }, []);
+
     // Fetch analytics data when the page mounts
     useEffect(() => {
 
-        let cancelled = false;
+        const timeoutId = setTimeout(loadAnalytics, 0);
 
-        async function loadAnalytics() {
-
-            try {
-
-                // Fetch all three datasets concurrently
-                const [
-                    vehicleResponse,
-                    routeResponse,
-                    alertResponse
-                ] = await Promise.all([
-                    fetchVehicles({
-                        include: "route"
-                    }),
-                    fetchRoutes(),
-                    fetchAlerts({
-                        "filter[datetime]": "NOW",
-                        "filter[activity]": "ALL",
-                        include: "routes"
-                    })
-                ]);
-
-                if (!cancelled) {
-
-                    setVehicles(vehicleResponse.data);
-
-                    // Combine route metadata from all three responses
-                    setRoutes([
-                        ...routeResponse.data,
-                        ...(vehicleResponse.included || [])
-                            .filter((item) => item.type === "route"),
-                        ...(alertResponse.included || [])
-                            .filter((item) => item.type === "route")
-                    ]);
-
-                    setAlerts(alertResponse.data);
-                    setError(null);
-
-                }
-
-            } catch (err) {
-
-                if (!cancelled) {
-                    setError(err.message);
-                }
-
-            } finally {
-
-                if (!cancelled) {
-                    setLoading(false);
-                }
-
-            }
-
-        }
-
-        loadAnalytics();
-
-        // Prevent state updates after leaving the page
         return () => {
-            cancelled = true;
+            clearTimeout(timeoutId);
+            activeRequest.current = null;
         };
 
-    }, []);
+    }, [loadAnalytics]);
+
+    // Automatically refresh analytics data
+    useEffect(() => {
+
+        // Do not create an interval when auto-refresh is disabled
+        if (!autoRefresh) {
+            return;
+        }
+
+        const intervalId = setInterval(
+            loadAnalytics,
+            REFRESH_INTERVAL
+        );
+
+        // Remove the interval when leaving the page
+        // or disabling automatic refresh
+        return () => {
+            clearInterval(intervalId);
+        };
+
+    }, [autoRefresh, loadAnalytics]);
 
     // Create a lookup object for efficient route access
     const routeLookup = useMemo(() => {
@@ -172,10 +219,83 @@ export default function Analytics() {
             {error && (
                 <p className="refresh-error" role="alert">
                     Unable to load analytics data: {error}
+                    {lastRefreshed &&
+                        " Displaying the last successfully retrieved data."}
                 </p>
             )}
 
-            {!loading && !error && (
+            {/* Analytics refresh controls */}
+            <div className="refresh-panel">
+
+                <div className="refresh-controls">
+
+                    <button
+                        type="button"
+                        className="refresh-button"
+                        onClick={loadAnalytics}
+                        disabled={loading || refreshing}
+                    >
+                        <span
+                            className={`refresh-icon ${
+                                refreshing ? "spinning" : ""
+                            }`}
+                            aria-hidden="true"
+                        >
+                            ↻
+                        </span>
+
+                        {refreshing ? "Refreshing..." : "Refresh Now"}
+                    </button>
+
+                    <label className="auto-refresh-control">
+
+                        <input
+                            type="checkbox"
+                            className="refresh-toggle"
+                            checked={autoRefresh}
+                            onChange={(event) =>
+                                setAutoRefresh(event.target.checked)
+                            }
+                        />
+
+                        <span>Auto-refresh</span>
+
+                    </label>
+
+                </div>
+
+                <div className="refresh-information">
+
+                    <div className="refresh-status">
+
+                        <span
+                            className={`refresh-status-dot ${
+                                autoRefresh ? "active" : ""
+                            }`}
+                        />
+
+                        <span>
+                            {autoRefresh
+                                ? `Updating every ${REFRESH_INTERVAL / 1000} seconds`
+                                : "Automatic updates paused"}
+                        </span>
+
+                    </div>
+
+                    <span className="last-refreshed">
+                        Last refreshed:{" "}
+                        {lastRefreshed
+                            ? lastRefreshed.toLocaleTimeString("en-US", {
+                                timeZone: "America/New_York"
+                            })
+                            : "Not yet refreshed"}
+                    </span>
+
+                </div>
+
+            </div>
+
+            {!loading && lastRefreshed && (                
 
                 <div className="analytics-grid">
 
