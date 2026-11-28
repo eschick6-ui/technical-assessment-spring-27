@@ -8,7 +8,8 @@ import {
     createRouteLookup,
     getVehicleAnalytics,
     getSeverityAnalytics,
-    getAlertAnalytics
+    getAlertAnalytics,
+    getChaosAnalytics
 } from "../utils/analyticsUtils";
 import {
     BarChart,
@@ -122,6 +123,14 @@ export default function Analytics() {
     const alertAnalytics = useMemo(() => {
         return getAlertAnalytics(alerts, routeLookup);
     }, [alerts, routeLookup]);
+
+    // Recalculate Chaos Scores only when the underlying data changes
+    const chaosData = useMemo(
+        () => getChaosAnalytics(vehicles, routes, alerts),
+        [vehicles, routes, alerts]
+    );
+
+    console.table(chaosData);
 
     return (
         <section className="page">

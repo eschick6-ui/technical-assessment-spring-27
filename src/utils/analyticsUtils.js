@@ -3,6 +3,26 @@ import {
     getTransitCategory
 } from "./transitUtils";
 
+// Weights representing the relative disruption of each alert effect
+const ALERT_EFFECT_WEIGHTS = {
+    SUSPENSION: 2.0,
+    SHUTTLE: 1.8,
+    STOP_CLOSURE: 1.5,
+    STATION_CLOSURE: 1.5,
+    DELAY: 1.4,
+    DETOUR: 1.2,
+    SERVICE_CHANGE: 1.2,
+    REDUCED_SERVICE: 1.2,
+    SIGNIFICANT_DELAY: 1.8,
+    ELEVATOR_CLOSURE: 0.8,
+    ESCALATOR_CLOSURE: 0.6,
+    ACCESS_ISSUE: 0.8,
+    PARKING_ISSUE: 0.3,
+    BIKE_ISSUE: 0.3,
+    EXTRA_SERVICE: 0,
+    INFORMATION: 0.2
+};
+
 // Create a lookup object that maps route IDs to route objects
 export function createRouteLookup(routes) {
 
@@ -149,4 +169,126 @@ export function getAlertAnalytics(alerts, routeLookup) {
         color: category.color,
         alerts: counts[category.id]
     }));
+}
+
+// Calculate the weighted disruption caused by an individual alert
+function getAlertImpact(alert) {
+
+    const { severity, effect } = alert.attributes;
+
+    // Use a neutral weight for unrecognized alert effects
+    const effectWeight = ALERT_EFFECT_WEIGHTS[effect] ?? 1;
+
+    return (severity ?? 0) * effectWeight;
+}
+
+// Determine the chaos classification and display color
+function getChaosLevel(score) {
+
+    if (score < 20) {
+        return {
+            label: "Smooth Sailing",
+            color: "#22C55E"
+        };
+    }
+
+    if (score < 40) {
+        return {
+            label: "Minor Disruptions",
+            color: "#84CC16"
+        };
+    }
+
+    if (score < 60) {
+        return {
+            label: "Moderate Chaos",
+            color: "#EAB308"
+        };
+    }
+
+    if (score < 80) {
+        return {
+            label: "High Chaos",
+            color: "#F97316"
+        };
+    }
+
+    return {
+        label: "Extreme Chaos",
+        color: "#EF4444"
+    };
+}
+
+// Calculate a Chaos Score for each transit category
+export function getChaosAnalytics(vehicles, routes, alerts) {
+
+    // Create a lookup table for route information
+    const routeLookup = new Map(
+        routes.map((route) => [route.id, route])
+    );
+
+    // Calculate analytics for each transit category
+    return TRANSIT_CATEGORIES.map((category) => {
+
+        // Find vehicles belonging to this category
+        const categoryVehicles = vehicles.filter((vehicle) => {
+
+            const routeId =
+                vehicle.relationships?.route?.data?.id;
+
+            const route = routeLookup.get(routeId);
+
+            return getTransitCategory(route, routeId)
+                === category.id;
+        });
+
+        // Find alerts affecting this category
+        const categoryAlerts = alerts.filter((alert) => {
+
+            const affectedRoutes =
+                alert.relationships?.routes?.data || [];
+
+            return affectedRoutes.some((affectedRoute) => {
+
+                const routeId = affectedRoute.id;
+                const route = routeLookup.get(routeId);
+
+                return getTransitCategory(route, routeId)
+                    === category.id;
+            });
+        });
+
+        // Calculate the total weighted impact of all alerts
+        const totalImpact = categoryAlerts.reduce(
+            (total, alert) => total + getAlertImpact(alert),
+            0
+        );
+
+        // Account for differences in transit category size
+        // Use a minimum of 10 to avoid division by zero
+        // and excessive scores for smaller categories
+        const normalizationFactor = Math.max(
+            categoryVehicles.length,
+            10
+        );
+
+        // Calculate a normalized Chaos Score that gradually
+        // approaches 100 as the weighted alert impact increases
+        const score = Math.round(
+            (totalImpact / (totalImpact + normalizationFactor)) * 100
+        );
+
+        // Determine the chaos classification
+        const chaosLevel = getChaosLevel(score);
+
+        return {
+            ...category,
+            vehicles: categoryVehicles.length,
+            alerts: categoryAlerts.length,
+            impact: Number(totalImpact.toFixed(2)),
+            score,
+            chaosLevel: chaosLevel.label,
+            chaosColor: chaosLevel.color
+        };
+    });
 }
