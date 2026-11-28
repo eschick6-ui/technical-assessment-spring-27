@@ -183,7 +183,7 @@ function getAlertImpact(alert) {
 }
 
 // Determine the chaos classification and display color
-function getChaosLevel(score) {
+export function getChaosLevel(score) {
 
     if (score < 20) {
         return {

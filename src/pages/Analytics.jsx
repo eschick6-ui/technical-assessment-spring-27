@@ -9,6 +9,7 @@ import {
     getVehicleAnalytics,
     getSeverityAnalytics,
     getAlertAnalytics,
+    getChaosLevel,
     getChaosAnalytics
 } from "../utils/analyticsUtils";
 import {
@@ -24,6 +25,7 @@ import {
     Pie
 } from "recharts";
 import AnalyticsTooltip from "../components/AnalyticsTooltip";
+import ChaosMeter from "../components/ChaosMeter";
 
 export default function Analytics() {
     // Store MBTA API data
@@ -124,13 +126,28 @@ export default function Analytics() {
         return getAlertAnalytics(alerts, routeLookup);
     }, [alerts, routeLookup]);
 
-    // Recalculate Chaos Scores only when the underlying data changes
-    const chaosData = useMemo(
-        () => getChaosAnalytics(vehicles, routes, alerts),
-        [vehicles, routes, alerts]
-    );
+    // Recalculate Chaos Scores and rank categories from highest to lowest
+    const chaosData = useMemo(() => {
+        return getChaosAnalytics(vehicles, routes, alerts)
+            .sort((a, b) => b.score - a.score);
+    }, [vehicles, routes, alerts]);
 
-    console.table(chaosData);
+    // Calculate the overall MBTA Chaos Score
+    const overallChaosScore = useMemo(() => {
+        if (chaosData.length === 0) {
+            return 0;
+        }
+
+        const totalScore = chaosData.reduce(
+            (sum, category) => sum + category.score,
+            0
+        );
+
+        return Math.round(totalScore / chaosData.length);
+    }, [chaosData]);
+
+    // Determine the classification of the overall Chaos Score
+    const overallChaosLevel = getChaosLevel(overallChaosScore);
 
     return (
         <section className="page">
@@ -161,6 +178,90 @@ export default function Analytics() {
             {!loading && !error && (
 
                 <div className="analytics-grid">
+
+                    <section className="chaos-section">
+
+                        <div className="chaos-section-header">
+                            <h2>MBTA Chaos Meter</h2>
+                            <p>
+                                A real-time estimate of transit disruption across
+                                the MBTA network.
+                            </p>
+                        </div>
+
+                        {/* Overall MBTA Chaos Score */}
+                        <ChaosMeter
+                            name="System-wide Chaos Score"
+                            score={overallChaosScore}
+                            chaosLevel={overallChaosLevel.level}
+                            chaosColor={overallChaosLevel.color}
+                            vehicles={vehicles.length}
+                            alerts={alerts.length}
+                            overall={true}
+                        />
+
+                        {/* Individual transit category Chaos Scores */}
+                        <div className="chaos-grid">
+                            {chaosData.map((category) => (
+                                <ChaosMeter
+                                    key={category.id}
+                                    name={category.name}
+                                    score={category.score}
+                                    chaosLevel={category.chaosLevel}
+                                    chaosColor={category.chaosColor}
+                                    color={category.color}
+                                    vehicles={category.vehicles}
+                                    alerts={category.alerts}
+                                />
+                            ))}
+                        </div>
+
+                        <details className="chaos-methodology">
+                            <summary>How is the Chaos Score calculated?</summary>
+
+                            <div className="chaos-methodology-content">
+                                <p>
+                                    The Chaos Score is a custom metric ranging from
+                                    0 to 100 that estimates the level of disruption
+                                    across the MBTA network.
+                                </p>
+
+                                <h4>1. Alert Severity</h4>
+                                <p>
+                                    Each active alert is assigned a severity rating
+                                    by the MBTA.
+                                </p>
+
+                                <h4>2. Disruption Weight</h4>
+                                <p>
+                                    Alerts are weighted based on their effect.
+                                    Service suspensions and delays generally
+                                    contribute more than informational alerts.
+                                </p>
+
+                                <h4>3. Vehicle Normalization</h4>
+                                <p>
+                                    Weighted alert impacts are normalized using
+                                    active vehicle counts to account for differences
+                                    in the size of each transit category.
+                                </p>
+
+                                <h4>4. System-wide Score</h4>
+                                <p>
+                                    The overall score is calculated by averaging
+                                    the scores of all eight transit categories.
+                                </p>
+
+                                <p className="chaos-disclaimer">
+                                    The Chaos Score is an unofficial estimate of
+                                    general service disruption, not an official
+                                    MBTA reliability metric or a prediction of
+                                    individual travel conditions.
+                                </p>
+                            </div>
+                        </details>
+
+                    </section>
 
                     {/* Active vehicles by transit category */}
                     <div className="analytics-card analytics-card-wide">
